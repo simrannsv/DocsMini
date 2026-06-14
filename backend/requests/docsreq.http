@@ -1,24 +1,40 @@
-### Create new document
-POST http://localhost:4545/api/docs-api/docs
+# ─── 1. LOGIN & SAVE COOKIE SESSION ───────────────────
+# @name loginSession
+POST http://localhost:4545/api/user-api/login
 Content-Type: application/json
+
+{
+  "email": "simranvarthavani@gmail.com",
+  "password": "123456789"
+}
 
 ###
 
-### Get all documents
-GET http://localhost:4545/api/docs-api/readall
+# ─── 2. CREATE NEW DOCUMENT (POST /) ──────────────────
+POST http://localhost:4545/api/docs-api/
 Content-Type: application/json
+Cookie: {{loginSession.response.headers.Set-Cookie}}
 
 ###
 
-### Get single document
+# ─── 3. GET ALL DOCUMENTS (GET /) ─────────────────────
+GET http://localhost:4545/api/docs-api/
+Content-Type: application/json
+Cookie: {{loginSession.response.headers.Set-Cookie}}
+
+###
+
+# ─── 4. GET SINGLE DOCUMENT (GET /:id) ────────────────
 GET http://localhost:4545/api/docs-api/3e0d66eb-bd86-4925-9503-855f63e54acd
 Content-Type: application/json
+Cookie: {{loginSession.response.headers.Set-Cookie}}
 
 ###
 
-### Rename title
+# ─── 5. RENAME TITLE (PATCH /:id/title) ───────────────
 PATCH http://localhost:4545/api/docs-api/37b337ac-2d41-430d-ac1f-aa525f9ca345/title
 Content-Type: application/json
+Cookie: {{loginSession.response.headers.Set-Cookie}}
 
 {
   "title": "GammaGames"
@@ -26,9 +42,10 @@ Content-Type: application/json
 
 ###
 
-### Share document
+# ─── 6. SHARE DOCUMENT (PATCH /:id/share) ─────────────
 PATCH http://localhost:4545/api/docs-api/3e0d66eb-bd86-4925-9503-855f63e54acd/share
 Content-Type: application/json
+Cookie: {{loginSession.response.headers.Set-Cookie}}
 
 {
   "email": "friend@gmail.com",
@@ -37,6 +54,7 @@ Content-Type: application/json
 
 ###
 
-### Delete document
+# ─── 7. DELETE DOCUMENT (DELETE /:id) ─────────────────
 DELETE http://localhost:4545/api/docs-api/paste-uuid-here
 Content-Type: application/json
+Cookie: {{loginSession.response.headers.Set-Cookie}}
