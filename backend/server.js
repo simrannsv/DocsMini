@@ -15,23 +15,31 @@ const app = exp()
 const port = process.env.PORT || 4545
 const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173'
 const localOriginPattern = /^http:\/\/localhost:\d+$/
-const corsOrigins = [allowedOrigin, localOriginPattern]
+
+// ─── DYNAMIC CORS CONFIGURATION ────────────────
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    
+    if (origin === allowedOrigin || localOriginPattern.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+};
 
 // ─── HTTP + SOCKET SERVER ─────────────────────
 const httpServer = http.createServer(app)
 const io = new Server(httpServer, {
-  cors: {
-    origin: corsOrigins,
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
+  cors: corsOptions
 })
 
 // ─── MIDDLEWARE ───────────────────────────────
-app.use(cors({
-  origin: corsOrigins,
-  credentials: true
-}))
+app.use(cors(corsOptions))
 app.use(cookieParser())
 app.use(exp.json())
 
@@ -43,8 +51,17 @@ app.use('/api/docs-api', docsApp)
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id)
 
+  // Track the document room this specific socket is currently looking at
+  let currentDocumentId = null;
+
   socket.on('get-document', async (documentId) => {
+    // Leave previous room if switching documents
+    if (currentDocumentId) {
+      socket.leave(currentDocumentId);
+    }
+    
     socket.join(documentId)
+    currentDocumentId = documentId;
 
     const { DocumentModel } = await import('./Models/docsModel.js')
     try {
@@ -54,14 +71,23 @@ io.on('connection', (socket) => {
       console.error('Error loading document via socket:', err)
       socket.emit('load-document', {})
     }
+  })
 
-    socket.on('send-changes', (delta) => {
-      socket.broadcast.to(documentId).emit('receive-changes', delta)
-    })
+  socket.on('send-changes', (delta) => {
+    if (currentDocumentId) {
+      socket.broadcast.to(currentDocumentId).emit('receive-changes', delta)
+    }
+  })
 
-    socket.on('save-document', async (data) => {
-      await DocumentModel.findByIdAndUpdate(documentId, { data })
-    })
+  socket.on('save-document', async (data) => {
+    if (currentDocumentId) {
+      try {
+        const { DocumentModel } = await import('./Models/docsModel.js')
+        await DocumentModel.findByIdAndUpdate(currentDocumentId, { data })
+      } catch (err) {
+        console.error('Error saving document via socket:', err)
+      }
+    }
   })
 
   socket.on('disconnect', () => {
