@@ -1,0 +1,27 @@
+### Register
+POST http://localhost:4545/api/user-api/users
+Content-Type: application/json
+
+{
+  "firstName": "James",
+  "lastName": "Dev",
+  "email": "friend@gmail.com",
+  "password": "123456"
+}
+
+###
+
+### Login
+POST http://localhost:4545/api/user-api/login
+Content-Type: application/json
+
+{
+  "email": "simss@gmail.com",
+  "password": "123456"
+}
+
+###
+
+### Logout
+POST http://localhost:4545/api/user-api/logout
+Content-Type: application/json

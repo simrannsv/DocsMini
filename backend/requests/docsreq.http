@@ -1,0 +1,42 @@
+### Create new document
+POST http://localhost:4545/api/docs-api/docs
+Content-Type: application/json
+
+###
+
+### Get all documents
+GET http://localhost:4545/api/docs-api/readall
+Content-Type: application/json
+
+###
+
+### Get single document
+GET http://localhost:4545/api/docs-api/3e0d66eb-bd86-4925-9503-855f63e54acd
+Content-Type: application/json
+
+###
+
+### Rename title
+PATCH http://localhost:4545/api/docs-api/37b337ac-2d41-430d-ac1f-aa525f9ca345/title
+Content-Type: application/json
+
+{
+  "title": "GammaGames"
+}
+
+###
+
+### Share document
+PATCH http://localhost:4545/api/docs-api/3e0d66eb-bd86-4925-9503-855f63e54acd/share
+Content-Type: application/json
+
+{
+  "email": "friend@gmail.com",
+  "role": "editor"
+}
+
+###
+
+### Delete document
+DELETE http://localhost:4545/api/docs-api/paste-uuid-here
+Content-Type: application/json
