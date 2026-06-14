@@ -62,7 +62,7 @@ function TextEditor({ documentId, readOnly, focusMode }) {
 
     const quill = quillRef.current
 
-    const socket = io('http://localhost:4545', { withCredentials: true })
+    const socket =io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:4545', { withCredentials: true })
     socketRef.current = socket
 
     socket.emit('get-document', documentId)
