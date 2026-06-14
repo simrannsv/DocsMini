@@ -53,11 +53,14 @@ docsApp.get("/:id", verifyToken(), async (req, res) => {
       return res.status(404).json({ message: "Document not found" })
     }
 
-    // check if user has access
-    const isOwner = doc.owner._id.toString() === req.user.id
-    const isCollaborator = doc.collaborators.some(
-      c => c.user._id.toString() === req.user.id
-    )
+    // 🌟 FIXED: Use .equals() or safe string parsing for populated object references
+    const ownerId = doc.owner._id ? doc.owner._id.toString() : doc.owner.toString()
+    const isOwner = ownerId === req.user.id
+
+    const isCollaborator = doc.collaborators.some(c => {
+      const collabUserId = c.user._id ? c.user._id.toString() : c.user.toString()
+      return collabUserId === req.user.id
+    })
 
     if (!isOwner && !isCollaborator) {
       return res.status(403).json({ message: "Access denied" })
@@ -67,9 +70,10 @@ docsApp.get("/:id", verifyToken(), async (req, res) => {
     let role = "viewer"
     if (isOwner) role = "owner"
     else {
-      const collab = doc.collaborators.find(
-        c => c.user._id.toString() === req.user.id
-      )
+      const collab = doc.collaborators.find(c => {
+        const collabUserId = c.user._id ? c.user._id.toString() : c.user.toString()
+        return collabUserId === req.user.id
+      })
       role = collab.role
     }
 
@@ -79,15 +83,16 @@ docsApp.get("/:id", verifyToken(), async (req, res) => {
   }
 })
 
-
 // PATCH /docs/:id/title
 docsApp.patch("/:id/title", verifyToken(), async (req, res) => {
   try {
     const doc = await DocumentModel.findById(req.params.id)
     if (!doc) return res.status(404).json({ message: "Document not found" })
 
-    // only owner or editor can rename
-    const isOwner = doc.owner.toString() === req.user.id
+    // 🌟 FIXED: Convert Mongoose ObjectIds to standard strings safely for validation comparison
+    const ownerId = doc.owner.toString()
+    const isOwner = ownerId === req.user.id
+    
     const isEditor = doc.collaborators.some(
       c => c.user.toString() === req.user.id && c.role === "editor"
     )
@@ -113,8 +118,9 @@ docsApp.patch("/:id/share", verifyToken(), async (req, res) => {
     const doc = await DocumentModel.findById(req.params.id)
     if (!doc) return res.status(404).json({ message: "Document not found" })
 
-    // only owner can share
-    if (doc.owner.toString() !== req.user.id) {
+    // 🌟 FIXED: Use clear string matching for owner permission barriers
+    const ownerId = doc.owner.toString()
+    if (ownerId !== req.user.id) {
       return res.status(403).json({ message: "Only owner can share" })
     }
 
@@ -146,15 +152,15 @@ docsApp.patch("/:id/share", verifyToken(), async (req, res) => {
   }
 })
 
-
 // DELETE /docs/:id
 docsApp.delete("/:id", verifyToken(), async (req, res) => {
   try {
     const doc = await DocumentModel.findById(req.params.id)
     if (!doc) return res.status(404).json({ message: "Document not found" })
 
-    // only owner can delete
-    if (doc.owner.toString() !== req.user.id) {
+    // 🌟 FIXED: Standardized owner string matching barrier
+    const ownerId = doc.owner.toString()
+    if (ownerId !== req.user.id) {
       return res.status(403).json({ message: "Only owner can delete" })
     }
 
