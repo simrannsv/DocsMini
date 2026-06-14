@@ -30,7 +30,7 @@ userApp.post("/users", async (req, res) => {
 
 // ─── LOGIN ────────────────────────────────────
 userApp.post("/login", async (req, res) => {
-  try {                                         // ← added try/catch
+  try {
     const { email, password } = req.body
 
     const user = await UserModel.findOne({ email })
@@ -48,17 +48,18 @@ userApp.post("/login", async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        role: user.role ?? 'USER'              // ← added role
+        role: user.role ?? 'USER'
       },
       process.env.SECRET_KEY,
-      { expiresIn: "7d" }                      // ← 1h is too short, 7d better
+      { expiresIn: "7d" }
     )
 
+    // 🌟 FIXED FOR PRODUCTION: Cross-domain cookie configuration
     res.cookie("token", signedToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000         // ← added maxAge to match expiry
+      secure: true,      // Required for HTTPS (Render defaults to HTTPS)
+      sameSite: "none",   // Allows cookie sharing across Vercel and Render domains
+      maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
     let userObj = user.toObject()
@@ -66,7 +67,7 @@ userApp.post("/login", async (req, res) => {
 
     res.status(200).json({
       message: "Login success",
-      user: userObj                            // ← removed token from body
+      user: userObj
     })
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -74,11 +75,12 @@ userApp.post("/login", async (req, res) => {
 })
 
 // ─── LOGOUT ───────────────────────────────────
-userApp.post("/logout", (req, res) => {        // ← changed GET to POST
+userApp.post("/logout", (req, res) => {
+  // 🌟 FIXED FOR PRODUCTION: Must match exact configuration options used at login to clear cleanly
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   })
   res.status(200).json({ message: "Logout success" })
 })
