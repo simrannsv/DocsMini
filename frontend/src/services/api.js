@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:4545',
+  baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:4545',
   withCredentials: true
 })
 
